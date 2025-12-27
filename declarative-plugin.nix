@@ -38,7 +38,20 @@
               v
             else
               pkgs.writeText ("mnw-" + builtins.concatStringsSep "-" path) v
-          }' \"$out/${builtins.concatStringsSep "/" path}\""
+          }' \"$out/${
+            builtins.concatStringsSep "/" (
+              map (
+                x:
+                assert lib.assertMsg ((builtins.match ".*/.*" x) == null) ''
+                  mnw-declarative-plugin: path "${x}" contains '/' which is not allowed
+                  instead of "${builtins.concatStringsSep "\".\"" path}" use "${
+                    builtins.concatStringsSep "\".\"" (map (x: builtins.replaceStrings [ "/" ] [ "\".\"" ] x) path)
+                  }" instead
+                '';
+                x
+              ) path
+            )
+          }\""
       ))
       (builtins.filter (x: x != null))
       lib.concatLines
